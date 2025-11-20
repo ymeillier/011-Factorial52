@@ -1,3 +1,11 @@
+
+An App vibe coded with cline and Gemini 3 to represent the scale of !52, i.e the number of unique shuffles in a deck of 52 cards.
+
+![](./assets/README/file-20251119180229938.png)
+
+
+![](./assets/README/file-20251119180302048.png)
+
 # Factorial 52: The Scale of Shuffles
 
 This project visualizes the immense scale of 52 factorial (52!), the number of unique combinations in a deck of cards, by comparing it to other massive quantities in a linear scale model.

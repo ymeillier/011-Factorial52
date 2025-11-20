@@ -1,6 +1,10 @@
 
 
 
+🎉 Repository '011-Factorial52' initialized, committed, and pushed to GitHub. (/Users/meillier/Documents/06-vscode/factorial52) 
+🔗 **Repository URL:** https://github.com/ymeillier/011-Factorial52
+ 
+
 # Firebase
 
 ### Firebase project

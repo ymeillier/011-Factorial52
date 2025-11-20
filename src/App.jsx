@@ -9,7 +9,7 @@ import cardBackImage from './assets/cards-back.png';
 const DOT_SIZE = 0.04; 
 
 // Compressed Visual Scale for Visibility
-// New Order: Humans -> Ants -> Seconds -> Sand -> Water -> Atoms -> MilkyWay -> Cards -> Sun
+// New Order: Humans -> Stars -> Trees -> Cells -> Ants -> Seconds -> Sand -> Celestial -> Water -> Atoms -> MilkyWay -> Cards -> Facts
 // Spacing increased significantly to avoid label overlap.
 
 const STAGES = [
@@ -22,6 +22,17 @@ const STAGES = [
     rotationAxis: [0, 1, 0],
     color: '#00ff44',
     emissive: '#004400',
+    particleCount: 400
+  },
+  {
+    id: 'stars_mw',
+    label: 'Stars in Milky Way',
+    scientific: '2 x 10^11',
+    valueLabel: '200,000,000,000',
+    value: 2e11,
+    rotationAxis: [0.2, 1, 0],
+    color: '#FFFFE0', // Light Yellow
+    emissive: '#555500',
     particleCount: 400
   },
   {
@@ -80,6 +91,17 @@ const STAGES = [
     particleCount: 800
   },
   {
+    id: 'celestial',
+    label: 'Celestial Bodies in Universe',
+    scientific: '10^24',
+    valueLabel: '1,000,000,000,000,000,000,000,000',
+    value: 1e24,
+    rotationAxis: [1, 0.5, 0],
+    color: '#9370DB', // Medium Purple
+    emissive: '#220044',
+    particleCount: 1000
+  },
+  {
     id: 'water',
     label: 'Drops of Water in Oceans',
     scientific: '2.6 x 10^25',
@@ -124,16 +146,14 @@ const STAGES = [
     particleCount: 15000
   },
   {
-    id: 'sun',
-    label: 'The Sun',
-    scientific: 'Reference',
+    id: 'facts',
+    label: 'Mind-Blowing Scale',
+    scientific: '',
     valueLabel: '',
-    value: 0, // Special case
-    radius: 400, // Fixed size for reference
-    position: [0, 0, -400], // Will be adjusted or ignored by dynamic logic
+    value: 8e67, // Keep same scale as cards
     rotationAxis: [0, 1, 0],
-    color: '#ffaa00',
-    emissive: '#ff4400',
+    color: '#00ffff',
+    emissive: '#004444',
     particleCount: 0
   }
 ];
@@ -161,12 +181,12 @@ function SortingGame({ onComplete }) {
     const [gameState, setGameState] = useState('playing'); // playing, success, fail
     const [draggedItem, setDraggedItem] = useState(null);
 
-    // We have 11 items total (0..10). Sun is 10.
-    // Game sorts 0..9.
-    const TOTAL_GAME_ITEMS = 10;
+    // We have 13 items total (0..12). Facts is 12.
+    // Game sorts 0..11 (Cards).
+    const TOTAL_GAME_ITEMS = 12;
 
     useEffect(() => {
-        // Initialize game with shuffled stages (excluding Sun)
+        // Initialize game with shuffled stages (excluding Facts)
         const gameStages = STAGES.slice(0, TOTAL_GAME_ITEMS).map(s => ({ id: s.id, label: s.label, value: s.value }));
         // Shuffle
         for (let i = gameStages.length - 1; i > 0; i--) {
@@ -294,7 +314,10 @@ function SortingGame({ onComplete }) {
         return (
             <div className="quiz-feedback">
                 <p>Not quite right. Remember, we start from Humans and go up to the Universe!</p>
-                <button className="retry-btn" onClick={resetGame}>Try Again</button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button className="retry-btn" onClick={resetGame} style={{ flex: 1 }}>Try Again</button>
+                    <button className="start-btn" onClick={onComplete} style={{ flex: 1, marginTop: 0, background: '#00aaff', color: 'white' }}>See Solution</button>
+                </div>
             </div>
         );
     }
@@ -387,7 +410,7 @@ function TypewriterText() {
     return (
         <Text 
             position={[0, 5, 0]} 
-            color="white" 
+            color="#00ffff" 
             fontSize={1}
             maxWidth={viewport.width * 0.9} 
             textAlign="center"
@@ -429,33 +452,6 @@ function FannedDeck() {
                     <meshBasicMaterial map={texture} side={THREE.DoubleSide} />
                 </mesh>
             ))}
-        </group>
-    );
-}
-
-// --- Sun Component ---
-function Sun({ visualData }) {
-    const stage = STAGES.find(s => s.id === 'sun');
-    const meshRef = useRef();
-
-    useFrame((state, delta) => {
-        if (meshRef.current) meshRef.current.rotation.y += delta * 0.02;
-    });
-    
-    // Sun is always background reference, keep it at fixed large distance/size relative to scene
-    // or use passed position if we want it to move.
-    // Current logic: fixed position.
-
-    return (
-        <group position={stage.position} ref={meshRef}>
-            <mesh>
-                <sphereGeometry args={[stage.radius, 64, 64]} />
-                <meshBasicMaterial color={stage.color} />
-            </mesh>
-            <mesh scale={[1.05, 1.05, 1.05]}>
-                <sphereGeometry args={[stage.radius, 32, 32]} />
-                <meshBasicMaterial color={stage.emissive} transparent opacity={0.2} side={THREE.BackSide} />
-            </mesh>
         </group>
     );
 }
@@ -632,21 +628,7 @@ function CameraController({ visualStages }) {
         const lastStage = STAGES[stageIndex];
         const currentVisual = visualStages[stageIndex];
 
-        if (lastStage.id === 'sun') {
-             // Sun view: same as before, Sun is static background
-             const width = 1000;
-             const fovRad = (60 * Math.PI) / 180;
-             const aspect = size.width / size.height;
-             let z = (width / aspect) / (2 * Math.tan(fovRad / 2));
-             const height = 1000; 
-             const zH = height / (2 * Math.tan(fovRad / 2));
-             z = Math.max(z, zH) * 1.2;
-
-             return {
-                 pos: new THREE.Vector3(355, 0, z),
-                 look: new THREE.Vector3(355, 0, 0)
-             };
-        }
+        // (Sun view logic removed)
 
         // For number planets, focus on the current one (largest) and previous ones
         if (!currentVisual) return { pos: new THREE.Vector3(0,0,10), look: new THREE.Vector3(0,0,0) };
@@ -699,10 +681,12 @@ function App() {
       
       const visuals = new Array(STAGES.length).fill(null);
       
-      // Only scale up to Cards (index 10). Sun (11) is separate?
-      // Wait, indices: 0..9 are Numbers. 10 is Sun.
-      // So effectiveIndex <= 9.
-      const effectiveIndex = Math.min(stageIndex, 9);
+      // Indices: 0..11 are Numbers (Cards is 11). 12 is Facts.
+      // If Facts (12), we want to show Cards (11).
+      let effectiveIndex = stageIndex;
+      if (stageIndex === 12) effectiveIndex = 11; 
+      
+      effectiveIndex = Math.min(effectiveIndex, 11); 
       
       const BASE_RADIUS = 4;
       const GAP = 1; // Reduced gap
@@ -739,7 +723,6 @@ function App() {
       }
       
       // Future planets (if any visible? Usually we show 0 to stageIndex).
-      // If we are at stageIndex, planets > stageIndex are not shown by logic below.
       
       return visuals;
   }, [stageIndex]);
@@ -759,12 +742,10 @@ function App() {
             <group>
                 {/* Render planets up to current stage using DYNAMIC visualStages */}
                 {visualStages.slice(0, stageIndex + 1).map((stage, i) => {
-                    if (!stage || stage.id === 'sun') return null;
+                    if (!stage || stage.id === 'sun' || stage.id === 'facts') return null;
                     return <PlanetSphere key={stage.id} stageData={stage} />;
                 })}
                 
-                {/* Sun visible in final stage */}
-                {stageIndex >= 10 && <Sun />}
             </group>
         )}
 
@@ -778,6 +759,22 @@ function App() {
         {isIntro ? (
             <div className="intro-ui" style={{ padding: '20px', maxWidth: '95vw', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
                 <SortingGame onComplete={start} />
+            </div>
+        ) : currentStage?.id === 'facts' ? (
+            <div className="intro-ui" style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', maxHeight: '80vh', overflowY: 'auto' }}>
+                <h2 style={{ color: '#ffcc00', fontSize: '2rem', marginBottom: '20px', textAlign: 'center' }}>Fun Facts about 52!</h2>
+                <ul style={{ textAlign: 'left', fontSize: '1.1rem', color: '#ddd', lineHeight: '1.6', listStyleType: 'disc', paddingLeft: '20px' }}>
+                    <li style={{ marginBottom: '10px' }}>Every single shuffle is likely unique in human history. It was never ever shuffled the same way, and will never be shuffled the same again.</li>
+                    <li style={{ marginBottom: '10px' }}>Assuming 500,000 tables/games in the world (casino and recreative) and a shuffle per table every minute, it would take <span style={{color:'#00ffff'}}>3 &times; 10<sup>56</sup></span> years to go through all combinations.</li>
+                    <li style={{ marginBottom: '10px' }}>The universe is only ~ <span style={{color:'#00ffff'}}>1.38 &times; 10<sup>10</sup></span> years old.</li>
+                    <li style={{ marginBottom: '10px' }}>The timespan required to see every card shuffle is <span style={{color:'#00ffff'}}>21.7 quattuordecillion (1 followed by 45 zeros)</span> times longer than the entire history of the universe so far.</li>
+                    <li style={{ marginBottom: '10px' }}>This ratio <span style={{color:'#00ffff'}}>(10<sup>46</sup>)</span> is roughly equal to the ratio between the size of a single atom and the size of the entire observable universe.</li>
+                </ul>
+                <div className="controls" style={{ marginTop: '30px' }}>
+                    <button className="toggle-btn" onClick={prevStage}>
+                        Previous
+                    </button>
+                </div>
             </div>
         ) : (
             <>
@@ -809,9 +806,9 @@ function App() {
                 </div>
             </>
         )}
-        <div style={{ position: 'absolute', bottom: '10px', right: '20px', color: '#00aaff', fontSize: '0.8rem', pointerEvents: 'none' }}>
-            Built with Gemini 3
-        </div>
+      </div>
+      <div style={{ position: 'absolute', bottom: '10px', right: '20px', color: '#00aaff', fontSize: '0.8rem', pointerEvents: 'none', zIndex: 2000000 }}>
+          Built with Gemini 3
       </div>
     </div>
   );
